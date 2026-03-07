@@ -9,6 +9,7 @@ type KafkaConfig struct {
 	Brokers     []string `yaml:"brokers"`
 	InputTopic  string   `yaml:"input_topic"`
 	OutputTopic string   `yaml:"output_topic"`
+	GroupID     string   `yaml:"group_id"`
 }
 
 type PostgresConfig struct {
