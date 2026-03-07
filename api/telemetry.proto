@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "iotmonitoring";
+
+service Scrapper {
+  rpc SendTelemetry(Telemetry) returns (google.protobuf.Empty);
+}
+
+message Telemetry {
+  int64 sender_id = 1;
+  string auth_token = 2;
+  int64 timestamp = 3;
+  double latitude = 4;
+  double longitude = 5;
+  optional string log_message = 6;
+  optional float temperature = 7;
+  optional float pressure = 8;
+  optional float wind_speed = 9;
+}
