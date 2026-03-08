@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-option go_package = "iotmonitoring";
+option go_package = "github.com/MotyaSS/IoTMonitoring";
 
 service Scrapper {
   rpc SendTelemetry(Telemetry) returns (google.protobuf.Empty);
