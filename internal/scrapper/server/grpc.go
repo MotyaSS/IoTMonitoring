@@ -10,37 +10,68 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type Service interface {
+	SendTelemetry(context.Context, *pb.Telemetry) error
+}
+
 type grpcServer struct {
-	addr string
-	log  *slog.Logger
+	addr   string
+	log    *slog.Logger
+	svc    Service
+	server *grpc.Server
 	pb.UnimplementedScrapperServer
 }
 
-func NewServer(addr string, log *slog.Logger) *grpcServer {
+func NewServer(addr string, svc Service, log *slog.Logger) *grpcServer {
 	if log == nil {
 		log = slog.Default()
 	}
 	return &grpcServer{
 		addr: addr,
 		log:  log,
+		svc:  svc,
 	}
 }
 
 func (s *grpcServer) SendTelemetry(ctx context.Context, in *pb.Telemetry) (*emptypb.Empty, error) {
 	s.log.Info("got telemetry", "id", in.SenderId)
-	return nil, nil
+
+	if s.svc == nil {
+		s.log.Error("no service configured to handle telemetry")
+		return nil, nil
+	}
+
+	if err := s.svc.SendTelemetry(ctx, in); err != nil {
+		s.log.Error("failed to forward telemetry to service", "err", err)
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
-func (s *grpcServer) Run() error {
+func (s *grpcServer) Run(ctx context.Context) error {
 	lis, err := net.Listen("tcp", s.addr)
 	if err != nil {
 		return err
 	}
 
-	server := grpc.NewServer()
-	pb.RegisterScrapperServer(server, s)
+	s.server = grpc.NewServer()
+	pb.RegisterScrapperServer(s.server, s)
 	s.log.Info("grpc server listening",
 		"address", s.addr,
 	)
-	return server.Serve(lis)
+
+	serveErr := make(chan error, 1)
+	go func() {
+		serveErr <- s.server.Serve(lis)
+	}()
+
+	select {
+	case <-ctx.Done():
+		s.log.Info("shutdown requested, gracefully stopping grpc server")
+		s.server.GracefulStop()
+		return nil
+	case err := <-serveErr:
+		return err
+	}
 }

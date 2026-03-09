@@ -1,0 +1,10 @@
+grpc:
+  addr:
+    localhost:8080
+kafka:
+  brokers:
+    - localhost:kafka
+  output_topic:
+    raw_telemetry
+  group_id:
+    scrapper

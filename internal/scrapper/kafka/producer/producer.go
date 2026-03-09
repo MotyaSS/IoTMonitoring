@@ -3,27 +3,31 @@ package producer
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
 	IoTMonitoring "github.com/MotyaSS/IoTMonitoring/internal/scrapper/gen"
 	"github.com/segmentio/kafka-go"
-	"time"
 )
 
 type KafkaProducer struct {
 	w *kafka.Writer
 }
 
-func NewKafkaProducer(cfg config.KafkaConfig) *KafkaProducer {
+func NewKafkaProducer(cfg *config.KafkaConfig) (*KafkaProducer, error) {
+	if cfg.OutputTopic == nil {
+
+	}
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP(cfg.Brokers...),
-		Topic:                  cfg.OutputTopic,
+		Topic:                  *cfg.OutputTopic,
 		WriteTimeout:           10 * time.Second,
 		AllowAutoTopicCreation: true,
 		Balancer:               &kafka.RoundRobin{},
 	}
 	return &KafkaProducer{
 		w: w,
-	}
+	}, nil
 }
 
 func (kp *KafkaProducer) SendTelemetry(ctx context.Context, msg *IoTMonitoring.Telemetry) error {
