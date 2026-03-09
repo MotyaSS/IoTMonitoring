@@ -3,20 +3,23 @@ package producer
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
-	IoTMonitoring "github.com/MotyaSS/IoTMonitoring/internal/scrapper/gen"
+	pb "github.com/MotyaSS/IoTMonitoring/internal/scrapper/gen"
 	"github.com/segmentio/kafka-go"
 )
 
-type KafkaProducer struct {
-	w *kafka.Writer
+type ScrapperProducer struct {
+	w   *kafka.Writer
+	log *slog.Logger
 }
 
-func NewKafkaProducer(cfg *config.KafkaConfig) (*KafkaProducer, error) {
+func NewScrapperProducer(cfg *config.KafkaConfig, log *slog.Logger) (*ScrapperProducer, error) {
 	if cfg.OutputTopic == nil {
-
+		return nil, errors.New("output topic required")
 	}
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP(cfg.Brokers...),
@@ -25,17 +28,19 @@ func NewKafkaProducer(cfg *config.KafkaConfig) (*KafkaProducer, error) {
 		AllowAutoTopicCreation: true,
 		Balancer:               &kafka.RoundRobin{},
 	}
-	return &KafkaProducer{
-		w: w,
+	return &ScrapperProducer{
+		w:   w,
+		log: log,
 	}, nil
 }
 
-func (kp *KafkaProducer) SendTelemetry(ctx context.Context, msg *IoTMonitoring.Telemetry) error {
+func (kp *ScrapperProducer) Produce(ctx context.Context, msg *pb.Telemetry) error {
 	v, err := json.Marshal(msg)
 	if err != nil {
+		kp.log.Error("Failed to marshal telemetry to json", "error", err)
 		return err
 	}
-
+	kp.log.Debug("Sending telemetry to kafka", "payload", string(v))
 	return kp.w.WriteMessages(
 		ctx,
 		kafka.Message{
@@ -46,6 +51,6 @@ func (kp *KafkaProducer) SendTelemetry(ctx context.Context, msg *IoTMonitoring.T
 
 }
 
-func (kp *KafkaProducer) Close() error {
+func (kp *ScrapperProducer) Close() error {
 	return kp.w.Close()
 }
