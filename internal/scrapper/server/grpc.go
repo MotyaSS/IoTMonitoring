@@ -2,24 +2,32 @@ package server
 
 import (
 	"context"
+	"log/slog"
+	"net"
+
 	pb "github.com/MotyaSS/IoTMonitoring/internal/scrapper/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"net"
 )
 
 type grpcServer struct {
 	addr string
+	log  *slog.Logger
 	pb.UnimplementedScrapperServer
 }
 
-func NewServer(addr string) *grpcServer {
+func NewServer(addr string, log *slog.Logger) *grpcServer {
+	if log == nil {
+		log = slog.Default()
+	}
 	return &grpcServer{
 		addr: addr,
+		log:  log,
 	}
 }
 
 func (s *grpcServer) SendTelemetry(ctx context.Context, in *pb.Telemetry) (*emptypb.Empty, error) {
+	s.log.Info("got telemetry", "id", in.SenderId)
 	return nil, nil
 }
 
@@ -29,7 +37,10 @@ func (s *grpcServer) Run() error {
 		return err
 	}
 
-	grpcServer := grpc.NewServer()
-	pb.RegisterScrapperServer(grpcServer, s)
-	return grpcServer.Serve(lis)
+	server := grpc.NewServer()
+	pb.RegisterScrapperServer(server, s)
+	s.log.Info("grpc server listening",
+		"address", s.addr,
+	)
+	return server.Serve(lis)
 }

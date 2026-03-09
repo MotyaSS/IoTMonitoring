@@ -11,7 +11,7 @@ service Scrapper {
 message Telemetry {
   int64 sender_id = 1;
   string auth_token = 2;
-  int64 timestamp = 3;
+  string timestamp = 3;
   double latitude = 4;
   double longitude = 5;
   optional string log_message = 6;

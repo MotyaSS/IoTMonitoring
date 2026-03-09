@@ -1,6 +1,6 @@
 module github.com/MotyaSS/IoTMonitoring
 
-go 1.25.7
+go 1.26.1
 
 require (
 	github.com/segmentio/kafka-go v0.4.50

@@ -26,7 +26,7 @@ type Telemetry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SenderId      int64                  `protobuf:"varint,1,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
 	AuthToken     string                 `protobuf:"bytes,2,opt,name=auth_token,json=authToken,proto3" json:"auth_token,omitempty"`
-	Timestamp     int64                  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Timestamp     string                 `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	Latitude      float64                `protobuf:"fixed64,4,opt,name=latitude,proto3" json:"latitude,omitempty"`
 	Longitude     float64                `protobuf:"fixed64,5,opt,name=longitude,proto3" json:"longitude,omitempty"`
 	LogMessage    *string                `protobuf:"bytes,6,opt,name=log_message,json=logMessage,proto3,oneof" json:"log_message,omitempty"`
@@ -81,11 +81,11 @@ func (x *Telemetry) GetAuthToken() string {
 	return ""
 }
 
-func (x *Telemetry) GetTimestamp() int64 {
+func (x *Telemetry) GetTimestamp() string {
 	if x != nil {
 		return x.Timestamp
 	}
-	return 0
+	return ""
 }
 
 func (x *Telemetry) GetLatitude() float64 {
@@ -139,7 +139,7 @@ const file_telemetry_proto_rawDesc = "" +
 	"\tsender_id\x18\x01 \x01(\x03R\bsenderId\x12\x1d\n" +
 	"\n" +
 	"auth_token\x18\x02 \x01(\tR\tauthToken\x12\x1c\n" +
-	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\x12\x1a\n" +
+	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\x12\x1a\n" +
 	"\blatitude\x18\x04 \x01(\x01R\blatitude\x12\x1c\n" +
 	"\tlongitude\x18\x05 \x01(\x01R\tlongitude\x12$\n" +
 	"\vlog_message\x18\x06 \x01(\tH\x00R\n" +

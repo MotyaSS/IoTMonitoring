@@ -1,7 +1,9 @@
 package service
 
-import "github.com/segmentio/kafka-go"
+import (
+	"github.com/MotyaSS/IoTMonitoring/internal/scrapper/kafka/producer"
+)
 
 type Service struct {
-	kafka kafka.ProducerSession
+	kafka *producer.KafkaProducer
 }
