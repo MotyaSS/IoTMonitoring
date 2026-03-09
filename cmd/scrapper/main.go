@@ -47,5 +47,6 @@ func main() {
 	if err := s.Run(ctx); err != nil {
 		fmt.Println("server exited with error:", err)
 	}
+
 	fmt.Println("server shutdown complete")
 }
