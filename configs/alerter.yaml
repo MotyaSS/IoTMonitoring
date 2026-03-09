@@ -1,0 +1,9 @@
+kafka:
+  brokers:
+    - "kafka:9092"
+  input_topic: "processed_telemetry"
+  group_id: "alerter"
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: "0"

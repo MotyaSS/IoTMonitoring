@@ -1,10 +1,7 @@
 grpc:
-  addr:
-    localhost:8080
+  addr: "0.0.0.0:8080"
 kafka:
   brokers:
-    - localhost:kafka
-  output_topic:
-    raw_telemetry
-  group_id:
-    scrapper
+    - "kafka:9092"
+  output_topic: "raw_telemetry"
+  group_id: "scrapper"

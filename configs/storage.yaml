@@ -1,0 +1,24 @@
+kafka:
+  brokers:
+    - "kafka:9092"
+  input_topic: "raw_telemetry"
+  group_id: "storage"
+postgres:
+  host: "postgres"
+  port: "5432"
+  username: "postgres"
+  password: "postgres"
+  db: "iot"
+mongo:
+  uri: "mongodb://mongo:27017"
+  db: "iot"
+s3:
+  endpoint: "http://minio:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  use_ssl: false
+  bucket_name: "iot"
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: "0"
