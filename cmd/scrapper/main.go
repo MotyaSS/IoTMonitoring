@@ -48,5 +48,4 @@ func main() {
 		fmt.Println("server exited with error:", err)
 	}
 	fmt.Println("server shutdown complete")
-
 }
