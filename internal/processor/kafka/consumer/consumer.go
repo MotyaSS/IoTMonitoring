@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
@@ -13,7 +14,10 @@ type ProcessorConsumer struct {
 	log *slog.Logger
 }
 
-func NewProcessorConsumer(cfg *config.KafkaConfig, log *slog.Logger) *ProcessorConsumer {
+func NewProcessorConsumer(cfg *config.KafkaConfig, log *slog.Logger) (*ProcessorConsumer, error) {
+	if cfg.InputTopic == nil {
+		return nil, errors.New("input topic required")
+	}
 	return &ProcessorConsumer{
 		r: kafka.NewReader(kafka.ReaderConfig{
 			Brokers: cfg.Brokers,
@@ -21,7 +25,7 @@ func NewProcessorConsumer(cfg *config.KafkaConfig, log *slog.Logger) *ProcessorC
 			Topic:   *cfg.InputTopic,
 		}),
 		log: log,
-	}
+	}, nil
 }
 
 func (p *ProcessorConsumer) Consume(ctx context.Context) (kafka.Message, error) {

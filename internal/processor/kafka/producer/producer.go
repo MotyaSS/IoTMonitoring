@@ -17,7 +17,7 @@ type ProcessorProducer struct {
 	log *slog.Logger
 }
 
-func NewScrapperProducer(cfg *config.KafkaConfig, log *slog.Logger) (*ProcessorProducer, error) {
+func NewProcessorProducer(cfg *config.KafkaConfig, log *slog.Logger) (*ProcessorProducer, error) {
 	if cfg.OutputTopic == nil {
 		return nil, errors.New("output topic required")
 	}

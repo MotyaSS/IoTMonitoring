@@ -31,13 +31,15 @@ func main() {
 		return
 	}
 
-	kp, err := producer.NewScrapperProducer(cfg.Kafka, log)
+	p, err := producer.NewScrapperProducer(cfg.Kafka, log)
 	if err != nil {
 		fmt.Println("failed to create kafka producer: ", err)
 	}
-	defer kp.Close()
+	defer func() {
+		_ = p.Close()
+	}()
 
-	svc := service.New(kp, log)
+	svc := service.NewScrapperService(p, log)
 
 	s := server.NewServer(cfg.GRPC.Addr, svc, log)
 

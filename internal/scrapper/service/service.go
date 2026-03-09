@@ -13,7 +13,7 @@ type Service struct {
 	log *slog.Logger
 }
 
-func New(p *producer.ScrapperProducer, log *slog.Logger) *Service {
+func NewScrapperService(p *producer.ScrapperProducer, log *slog.Logger) *Service {
 	return &Service{
 		p:   p,
 		log: log,
