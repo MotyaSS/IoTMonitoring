@@ -12,6 +12,7 @@ import (
 
 type Service interface {
 	SendTelemetry(context.Context, *pb.Telemetry) error
+	Authenticate(token string) error
 }
 
 type grpcServer struct {
@@ -34,11 +35,18 @@ func NewServer(addr string, svc Service, log *slog.Logger) *grpcServer {
 }
 
 func (s *grpcServer) SendTelemetry(ctx context.Context, in *pb.Telemetry) (*emptypb.Empty, error) {
-	s.log.Info("got telemetry", "id", in.SenderId)
+	s.log.Debug("got telemetry", "id", in.SenderId)
 
 	if s.svc == nil {
 		s.log.Error("no service configured to handle telemetry")
 		return nil, nil
+	}
+
+	if s.svc.Authenticate(in.AuthToken) != nil {
+		s.log.Error("failed to authenticate",
+			"sender_id", in.SenderId,
+			"token", in.AuthToken,
+		)
 	}
 
 	if err := s.svc.SendTelemetry(ctx, in); err != nil {
