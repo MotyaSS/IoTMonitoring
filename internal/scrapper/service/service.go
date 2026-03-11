@@ -4,16 +4,16 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/MotyaSS/IoTMonitoring/internal/kafka"
 	pb "github.com/MotyaSS/IoTMonitoring/internal/scrapper/gen"
-	"github.com/MotyaSS/IoTMonitoring/internal/scrapper/kafka/producer"
 )
 
 type Service struct {
-	p   *producer.ScrapperProducer
+	p   *kafka.Producer
 	log *slog.Logger
 }
 
-func NewScrapperService(p *producer.ScrapperProducer, log *slog.Logger) *Service {
+func NewScrapperService(p *kafka.Producer, log *slog.Logger) *Service {
 	return &Service{
 		p:   p,
 		log: log,

@@ -2,6 +2,7 @@ kafka:
   brokers:
     - "kafka:9092"
   input_topic: "processed_telemetry"
+  output_topic: "alert"
   group_id: "alerter"
 redis:
   addr: "redis:6379"

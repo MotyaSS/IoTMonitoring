@@ -1,4 +1,4 @@
-package producer
+package kafka
 
 import (
 	"context"
@@ -8,16 +8,18 @@ import (
 	"time"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
-	pb "github.com/MotyaSS/IoTMonitoring/internal/scrapper/gen"
 	"github.com/segmentio/kafka-go"
 )
 
-type ScrapperProducer struct {
+type Producer struct {
 	w   *kafka.Writer
 	log *slog.Logger
 }
 
-func NewScrapperProducer(cfg *config.KafkaConfig, log *slog.Logger) (*ScrapperProducer, error) {
+func NewProducer(cfg *config.KafkaConfig, log *slog.Logger) (*Producer, error) {
+	if cfg.OutputTopic == nil {
+		return nil, errors.New("output topic required")
+	}
 	if cfg.OutputTopic == nil {
 		return nil, errors.New("output topic required")
 	}
@@ -28,19 +30,19 @@ func NewScrapperProducer(cfg *config.KafkaConfig, log *slog.Logger) (*ScrapperPr
 		AllowAutoTopicCreation: true,
 		Balancer:               &kafka.RoundRobin{},
 	}
-	return &ScrapperProducer{
+	return &Producer{
 		w:   w,
 		log: log,
 	}, nil
 }
 
-func (kp *ScrapperProducer) Produce(ctx context.Context, msg *pb.Telemetry) error {
+func (kp *Producer) Produce(ctx context.Context, msg any) error {
 	v, err := json.Marshal(msg)
 	if err != nil {
-		kp.log.Error("Failed to marshal telemetry to json", "error", err)
+		kp.log.Error("producer failed to marshal to json", "error", err)
 		return err
 	}
-	kp.log.Debug("Sending telemetry to kafka", "payload", string(v))
+	kp.log.Debug("sending telemetry to kafka", "payload", string(v))
 	return kp.w.WriteMessages(
 		ctx,
 		kafka.Message{
@@ -51,6 +53,6 @@ func (kp *ScrapperProducer) Produce(ctx context.Context, msg *pb.Telemetry) erro
 
 }
 
-func (kp *ScrapperProducer) Close() error {
+func (kp *Producer) Close() error {
 	return kp.w.Close()
 }

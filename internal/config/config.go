@@ -16,6 +16,7 @@ type KafkaConfig struct {
 	Brokers     []string `yaml:"brokers" validate:"required"`
 	InputTopic  *string  `yaml:"input_topic"`
 	OutputTopic *string  `yaml:"output_topic"`
+	Partition   *int     `yaml:"partition"`
 	GroupID     string   `yaml:"group_id" validate:"required"`
 }
 
@@ -40,19 +41,12 @@ type MongoConfig struct {
 	DB  string `yaml:"db" validate:"required"`
 }
 
-type RedisConfig struct {
-	Addr     string `yaml:"addr" validate:"required"`
-	Password string `yaml:"password" validate:"required"`
-	DB       string `yaml:"db" validate:"required"`
-}
-
 type Config struct {
 	GRPC     *GRPCConfig     `yaml:"grpc"`
 	Kafka    *KafkaConfig    `yaml:"kafka"`
 	Postgres *PostgresConfig `yaml:"postgres"`
 	S3       *S3Config       `yaml:"s3"`
 	Mongo    *MongoConfig    `yaml:"mongo"`
-	Redis    *RedisConfig    `yaml:"redis"`
 }
 
 func Load(path string) (*Config, error) {
