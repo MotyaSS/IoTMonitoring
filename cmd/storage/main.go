@@ -19,8 +19,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func main() {
@@ -63,7 +63,7 @@ func main() {
 		_ = postgresDB.Close()
 	}()
 
-	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Mongo.URI))
+	mongoClient, err := mongo.Connect(options.Client().ApplyURI(cfg.Mongo.URI))
 	if err != nil {
 		fmt.Println("failed to initialize mongo:", err)
 		return

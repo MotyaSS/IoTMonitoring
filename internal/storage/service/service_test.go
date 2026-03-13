@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestMakeEventIDDeterministic(t *testing.T) {
@@ -28,8 +28,8 @@ func TestMakeEventIDDeterministic(t *testing.T) {
 func TestBuildArchiveObject(t *testing.T) {
 	now := time.Now().UTC()
 	docs := []metricDoc{
-		{ID: primitive.NewObjectID(), EventID: "e1", DeviceID: "1", Timestamp: now, Latitude: 1.0, Longitude: 2.0, ReceivedAt: now},
-		{ID: primitive.NewObjectID(), EventID: "e2", DeviceID: "1", Timestamp: now.Add(time.Minute), Latitude: 1.1, Longitude: 2.1, ReceivedAt: now},
+		{ID: bson.NewObjectID(), EventID: "e1", DeviceID: "1", Timestamp: now, Latitude: 1.0, Longitude: 2.0, ReceivedAt: now},
+		{ID: bson.NewObjectID(), EventID: "e2", DeviceID: "1", Timestamp: now.Add(time.Minute), Latitude: 1.1, Longitude: 2.1, ReceivedAt: now},
 	}
 
 	key, payload, err := buildArchiveObject(docs)

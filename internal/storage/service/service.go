@@ -10,7 +10,7 @@ import (
 	"github.com/MotyaSS/IoTMonitoring/internal/kafka"
 	storagepb "github.com/MotyaSS/IoTMonitoring/internal/storage/gen"
 	"github.com/minio/minio-go/v7"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Service struct {

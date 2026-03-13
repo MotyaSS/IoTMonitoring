@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/types"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func (s *Service) runIngest(ctx context.Context) error {

@@ -10,9 +10,8 @@ import (
 	"time"
 
 	"github.com/minio/minio-go/v7"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func (s *Service) runArchiver(ctx context.Context) error {
@@ -76,16 +75,15 @@ func (s *Service) archiveOnce(ctx context.Context) error {
 		return fmt.Errorf("put object to minio: %w", err)
 	}
 
-	ids := make([]primitive.ObjectID, 0, len(docs))
+	ids := make([]bson.ObjectID, 0, len(docs))
 	for _, d := range docs {
 		ids = append(ids, d.ID)
 	}
 
 	if _, err := s.metricsColl.DeleteMany(ctx, bson.M{"_id": bson.M{"$in": ids}}); err != nil {
-		return fmt.Errorf("delete archived metrics from mongo: %w", err)
+		s.log.Error("failed to delete archived metrics", "err", err)
 	}
 
-	s.log.Info("archive batch completed", "count", len(docs), "object", objectKey)
 	return nil
 }
 
