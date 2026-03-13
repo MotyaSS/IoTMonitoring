@@ -16,7 +16,6 @@ type KafkaConfig struct {
 	Brokers     []string `yaml:"brokers" validate:"required"`
 	InputTopic  *string  `yaml:"input_topic"`
 	OutputTopic *string  `yaml:"output_topic"`
-	Partition   *int     `yaml:"partition"`
 	GroupID     string   `yaml:"group_id" validate:"required"`
 }
 
@@ -36,6 +35,13 @@ type S3Config struct {
 	BucketName string `yaml:"bucket_name" validate:"required"`
 }
 
+type RedisConfig struct {
+	Addr       string `yaml:"addr" validate:"required"`
+	Password   string `yaml:"password"`
+	DB         string `yaml:"db"`
+	TTLSeconds int64  `yaml:"ttl_seconds"`
+}
+
 type MongoConfig struct {
 	URI string `yaml:"uri" validate:"required"`
 	DB  string `yaml:"db" validate:"required"`
@@ -45,6 +51,7 @@ type Config struct {
 	GRPC     *GRPCConfig     `yaml:"grpc"`
 	Kafka    *KafkaConfig    `yaml:"kafka"`
 	Postgres *PostgresConfig `yaml:"postgres"`
+	Redis    *RedisConfig    `yaml:"redis"`
 	S3       *S3Config       `yaml:"s3"`
 	Mongo    *MongoConfig    `yaml:"mongo"`
 }

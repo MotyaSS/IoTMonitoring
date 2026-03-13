@@ -4,7 +4,10 @@ kafka:
   input_topic: "processed_telemetry"
   output_topic: "alert"
   group_id: "alerter"
+grpc:
+  addr: "storage:8090"
 redis:
   addr: "redis:6379"
   password: ""
   db: "0"
+  ttl_seconds: 300
