@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 
@@ -9,6 +11,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+var AuthErr = errors.New("scrapper failed to authenticate device")
 
 type Service interface {
 	SendTelemetry(context.Context, *pb.Telemetry) error
@@ -47,6 +51,7 @@ func (s *grpcServer) SendTelemetry(ctx context.Context, in *pb.Telemetry) (*empt
 			"sender_id", in.SenderId,
 			"token", in.AuthToken,
 		)
+		return nil, fmt.Errorf("%w: auth token - %s", AuthErr, in.AuthToken)
 	}
 
 	if err := s.svc.SendTelemetry(ctx, in); err != nil {
