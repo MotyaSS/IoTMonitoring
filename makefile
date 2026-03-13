@@ -2,7 +2,12 @@ proto:
 	@protoc \
 		--proto_path=api "api/telemetry.proto" \
 		--go_out="internal/scrapper/gen" --go_opt=paths=source_relative \
-    	--go-grpc_out="internal/scrapper/gen" --go-grpc_opt=paths=source_relative
+	    	--go-grpc_out="internal/scrapper/gen" --go-grpc_opt=paths=source_relative
+	@mkdir -p internal/storage/gen
+	@protoc \
+		--proto_path=api "api/storage.proto" \
+		--go_out="internal/storage/gen" --go_opt=paths=source_relative \
+		--go-grpc_out="internal/storage/gen" --go-grpc_opt=paths=source_relative
 scrapper:
 	@go run cmd/scrapper/main.go
 client:
