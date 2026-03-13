@@ -18,15 +18,12 @@ func NewConsumer(cfg *config.KafkaConfig, log *slog.Logger) (*Consumer, error) {
 	if cfg.InputTopic == nil {
 		return nil, errors.New("input topic required")
 	}
-	if cfg.Partition == nil {
-		return nil, errors.New("partition required")
-	}
+
 	return &Consumer{
 		r: kafka.NewReader(kafka.ReaderConfig{
-			Brokers:   cfg.Brokers,
-			GroupID:   cfg.GroupID,
-			Topic:     *cfg.InputTopic,
-			Partition: *cfg.Partition,
+			Brokers: cfg.Brokers,
+			GroupID: cfg.GroupID,
+			Topic:   *cfg.InputTopic,
 		}),
 		log: log,
 	}, nil

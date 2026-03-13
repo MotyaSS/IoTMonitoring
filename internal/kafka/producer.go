@@ -20,9 +20,7 @@ func NewProducer(cfg *config.KafkaConfig, log *slog.Logger) (*Producer, error) {
 	if cfg.OutputTopic == nil {
 		return nil, errors.New("output topic required")
 	}
-	if cfg.OutputTopic == nil {
-		return nil, errors.New("output topic required")
-	}
+
 	w := &kafka.Writer{
 		Addr:                   kafka.TCP(cfg.Brokers...),
 		Topic:                  *cfg.OutputTopic,
@@ -30,6 +28,7 @@ func NewProducer(cfg *config.KafkaConfig, log *slog.Logger) (*Producer, error) {
 		AllowAutoTopicCreation: true,
 		Balancer:               &kafka.RoundRobin{},
 	}
+
 	return &Producer{
 		w:   w,
 		log: log,
@@ -42,6 +41,7 @@ func (kp *Producer) Produce(ctx context.Context, msg any) error {
 		kp.log.Error("producer failed to marshal to json", "error", err)
 		return err
 	}
+
 	kp.log.Debug("sending telemetry to kafka", "payload", string(v))
 	return kp.w.WriteMessages(
 		ctx,
@@ -50,7 +50,6 @@ func (kp *Producer) Produce(ctx context.Context, msg any) error {
 			Value: v,
 		},
 	)
-
 }
 
 func (kp *Producer) Close() error {
