@@ -9,8 +9,8 @@ import (
 	"syscall"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
+	"github.com/MotyaSS/IoTMonitoring/internal/kafka"
 	"github.com/MotyaSS/IoTMonitoring/internal/logger"
-	"github.com/MotyaSS/IoTMonitoring/internal/scrapper/kafka/producer"
 	"github.com/MotyaSS/IoTMonitoring/internal/scrapper/server"
 	"github.com/MotyaSS/IoTMonitoring/internal/scrapper/service"
 )
@@ -31,9 +31,10 @@ func main() {
 		return
 	}
 
-	p, err := producer.NewScrapperProducer(cfg.Kafka, log)
+	p, err := kafka.NewProducer(cfg.Kafka, log)
 	if err != nil {
 		fmt.Println("failed to create kafka producer: ", err)
+		return
 	}
 	defer func() {
 		_ = p.Close()

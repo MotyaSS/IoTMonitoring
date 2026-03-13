@@ -71,10 +71,12 @@ func (s *Service) Start(ctx context.Context) error {
 func ProcessData(in *pb.Telemetry) (*types.ProcessedData, error) {
 	// some intense processing
 	<-time.After(100 * time.Millisecond)
-	t, err := time.Parse(time.DateOnly, in.Timestamp)
+
+	t, err := time.Parse(time.RFC3339, in.Timestamp)
 	if err != nil {
 		return nil, err
 	}
+
 	processed := types.ProcessedData{
 		SenderId:    in.SenderId,
 		Timestamp:   t,

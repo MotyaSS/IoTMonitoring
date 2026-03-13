@@ -10,9 +10,8 @@ import (
 	"syscall"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
+	"github.com/MotyaSS/IoTMonitoring/internal/kafka"
 	"github.com/MotyaSS/IoTMonitoring/internal/logger"
-	"github.com/MotyaSS/IoTMonitoring/internal/processor/kafka/consumer"
-	"github.com/MotyaSS/IoTMonitoring/internal/processor/kafka/producer"
 	"github.com/MotyaSS/IoTMonitoring/internal/processor/service"
 )
 
@@ -30,7 +29,7 @@ func main() {
 		return
 	}
 
-	p, err := producer.NewProcessorProducer(cfg.Kafka, log)
+	p, err := kafka.NewProducer(cfg.Kafka, log)
 	if err != nil {
 		fmt.Println("failed to initialize kafka producer: ", err)
 		return
@@ -40,7 +39,7 @@ func main() {
 		_ = p.Close()
 	}()
 
-	c, err := consumer.NewProcessorConsumer(cfg.Kafka, log)
+	c, err := kafka.NewConsumer(cfg.Kafka, log)
 	if err != nil {
 		fmt.Println("failed to initialize kafka consumer: ", err)
 		return
