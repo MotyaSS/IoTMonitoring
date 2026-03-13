@@ -16,19 +16,35 @@ import (
 type Service struct {
 	storagepb.UnimplementedStorageServer
 
-	consumer         *kafka.Consumer
-	postgres         *sql.DB
+	query    *queryAPI
+	ingest   *ingestWorker
+	archive  *archiveWorker
+	grpcAddr string
+	log      *slog.Logger
+}
+
+type queryAPI struct {
+	postgres *sql.DB
+	log      *slog.Logger
+}
+
+type ingestWorker struct {
+	consumer    *kafka.Consumer
+	metricsColl *mongo.Collection
+	log         *slog.Logger
+}
+
+type archiveWorker struct {
 	metricsColl      *mongo.Collection
 	s3               *minio.Client
 	bucketName       string
-	grpcAddr         string
 	retention        time.Duration
 	archiveInterval  time.Duration
 	archiveBatchSize int
 	log              *slog.Logger
 }
 
-func NewService(
+func NewStorageService(
 	consumer *kafka.Consumer,
 	postgres *sql.DB,
 	metricsColl *mongo.Collection,
@@ -52,21 +68,31 @@ func NewService(
 	}
 
 	return &Service{
-		consumer:         consumer,
-		postgres:         postgres,
-		metricsColl:      metricsColl,
-		s3:               s3,
-		bucketName:       bucketName,
-		grpcAddr:         grpcAddr,
-		retention:        retention,
-		archiveInterval:  archiveInterval,
-		archiveBatchSize: archiveBatchSize,
-		log:              log,
+		query: &queryAPI{
+			postgres: postgres,
+			log:      log,
+		},
+		ingest: &ingestWorker{
+			consumer:    consumer,
+			metricsColl: metricsColl,
+			log:         log,
+		},
+		archive: &archiveWorker{
+			metricsColl:      metricsColl,
+			s3:               s3,
+			bucketName:       bucketName,
+			retention:        retention,
+			archiveInterval:  archiveInterval,
+			archiveBatchSize: archiveBatchSize,
+			log:              log,
+		},
+		grpcAddr: grpcAddr,
+		log:      log,
 	}
 }
 
 func (s *Service) Start(ctx context.Context) error {
-	if s.consumer == nil || s.postgres == nil || s.metricsColl == nil || s.s3 == nil {
+	if s.query == nil || s.ingest == nil || s.archive == nil || s.query.postgres == nil || s.ingest.consumer == nil || s.ingest.metricsColl == nil || s.archive.s3 == nil {
 		return fmt.Errorf("storage dependencies are not fully configured")
 	}
 

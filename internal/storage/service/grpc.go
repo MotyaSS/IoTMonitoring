@@ -14,6 +14,13 @@ import (
 )
 
 func (s *Service) GetDevice(ctx context.Context, req *storagepb.GetDeviceRequest) (*storagepb.GetDeviceResponse, error) {
+	if s.query == nil {
+		return nil, status.Error(codes.Internal, "query layer is not configured")
+	}
+	return s.query.GetDevice(ctx, req)
+}
+
+func (q *queryAPI) GetDevice(ctx context.Context, req *storagepb.GetDeviceRequest) (*storagepb.GetDeviceResponse, error) {
 	deviceID := req.GetDeviceId()
 	if deviceID == "" {
 		return nil, status.Error(codes.InvalidArgument, "device_id is required")
@@ -32,7 +39,7 @@ func (s *Service) GetDevice(ctx context.Context, req *storagepb.GetDeviceRequest
 	`
 
 	var d storagepb.Device
-	err := s.postgres.QueryRowContext(ctx, query, deviceID).Scan(
+	err := q.postgres.QueryRowContext(ctx, query, deviceID).Scan(
 		&d.DeviceId,
 		&d.WindSpeedHighBound,
 		&d.WindSpeedLowBound,
@@ -45,7 +52,10 @@ func (s *Service) GetDevice(ctx context.Context, req *storagepb.GetDeviceRequest
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "device not found")
 		}
-		s.log.Error("postgres query failed", "device_id", deviceID, "err", err)
+		q.log.Error("postgres query failed",
+			"device_id", deviceID,
+			"err", err,
+		)
 		return nil, status.Error(codes.Internal, "failed to query device")
 	}
 
@@ -70,7 +80,9 @@ func (s *Service) runGRPC(ctx context.Context) error {
 		errCh <- g.Serve(lis)
 	}()
 
-	s.log.Info("storage grpc server started", "addr", s.grpcAddr)
+	s.log.Info("storage grpc server started",
+		"addr", s.grpcAddr,
+	)
 
 	select {
 	case <-ctx.Done():

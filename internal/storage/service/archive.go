@@ -15,32 +15,44 @@ import (
 )
 
 func (s *Service) runArchiver(ctx context.Context) error {
-	ticker := time.NewTicker(s.archiveInterval)
+	if s.archive == nil {
+		return nil
+	}
+	return s.archive.Run(ctx)
+}
+
+func (w *archiveWorker) Run(ctx context.Context) error {
+	ticker := time.NewTicker(w.archiveInterval)
 	defer ticker.Stop()
 
-	s.log.Info("storage archiver started", "interval", s.archiveInterval.String(), "retention", s.retention.String())
+	w.log.Info("storage archiver started",
+		"interval", w.archiveInterval.String(),
+		"retention", w.retention.String(),
+	)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if err := s.archiveOnce(ctx); err != nil {
-				s.log.Error("archive cycle failed", "err", err)
+			if err := w.archiveOnce(ctx); err != nil {
+				w.log.Error("archive cycle failed",
+					"err", err,
+				)
 			}
 		}
 	}
 }
 
-func (s *Service) archiveOnce(ctx context.Context) error {
-	cutoff := time.Now().UTC().Add(-s.retention)
+func (w *archiveWorker) archiveOnce(ctx context.Context) error {
+	cutoff := time.Now().UTC().Add(-w.retention)
 
 	filter := bson.M{"timestamp": bson.M{"$lt": cutoff}}
 	findOpts := options.Find().
 		SetSort(bson.D{{Key: "timestamp", Value: 1}, {Key: "_id", Value: 1}}).
-		SetLimit(int64(s.archiveBatchSize))
+		SetLimit(int64(w.archiveBatchSize))
 
-	cur, err := s.metricsColl.Find(ctx, filter, findOpts)
+	cur, err := w.metricsColl.Find(ctx, filter, findOpts)
 	if err != nil {
 		return fmt.Errorf("find metrics to archive: %w", err)
 	}
@@ -48,7 +60,7 @@ func (s *Service) archiveOnce(ctx context.Context) error {
 		_ = cur.Close(ctx)
 	}()
 
-	docs := make([]metricDoc, 0, s.archiveBatchSize)
+	docs := make([]metricDoc, 0, w.archiveBatchSize)
 	for cur.Next(ctx) {
 		var d metricDoc
 		if err := cur.Decode(&d); err != nil {
@@ -68,7 +80,7 @@ func (s *Service) archiveOnce(ctx context.Context) error {
 		return fmt.Errorf("build archive object: %w", err)
 	}
 
-	_, err = s.s3.PutObject(ctx, s.bucketName, objectKey, bytes.NewReader(payload), int64(len(payload)), minio.PutObjectOptions{
+	_, err = w.s3.PutObject(ctx, w.bucketName, objectKey, bytes.NewReader(payload), int64(len(payload)), minio.PutObjectOptions{
 		ContentType: "application/gzip",
 	})
 	if err != nil {
@@ -80,8 +92,8 @@ func (s *Service) archiveOnce(ctx context.Context) error {
 		ids = append(ids, d.ID)
 	}
 
-	if _, err := s.metricsColl.DeleteMany(ctx, bson.M{"_id": bson.M{"$in": ids}}); err != nil {
-		s.log.Error("failed to delete archived metrics", "err", err)
+	if _, err := w.metricsColl.DeleteMany(ctx, bson.M{"_id": bson.M{"$in": ids}}); err != nil {
+		w.log.Error("failed to delete archived metrics", "err", err)
 	}
 
 	return nil
