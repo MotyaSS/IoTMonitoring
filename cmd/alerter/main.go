@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -25,42 +24,54 @@ import (
 func main() {
 	log := logger.NewLoggerWithPrefix(slog.NewTextHandler(os.Stdout, nil), "alerter")
 
-	cfg, err := config.Load("configs/alerter.yaml")
-	if err != nil || cfg.GRPC == nil || cfg.Kafka == nil || cfg.Redis == nil {
-		fmt.Println("failed to load config:", err)
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/alerter.yaml"
+	}
+
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		log.Error("failed to load config", "path", configPath, "err", err)
+		return
+	}
+	if cfg.GRPC == nil || cfg.Kafka == nil || cfg.Redis == nil {
+		log.Error("alerter config is incomplete: grpc, kafka and redis are required")
 		return
 	}
 
 	p, err := kafka.NewProducer(cfg.Kafka, log)
 	if err != nil {
-		fmt.Println("failed to initialize kafka producer:", err)
+		log.Error("failed to initialize kafka producer", "err", err)
 		return
 	}
+
 	defer func() {
 		_ = p.Close()
 	}()
 
 	c, err := kafka.NewConsumer(cfg.Kafka, log)
 	if err != nil {
-		fmt.Println("failed to initialize kafka consumer:", err)
+		log.Error("failed to initialize kafka consumer", "err", err)
 		return
 	}
+
 	defer func() {
 		_ = c.Close()
 	}()
 
 	grpcConn, err := grpc.NewClient(cfg.GRPC.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		fmt.Println("failed to connect to storage grpc:", err)
+		log.Error("failed to connect to storage grpc", "addr", cfg.GRPC.Addr, "err", err)
 		return
 	}
+
 	defer func() {
 		_ = grpcConn.Close()
 	}()
 
 	redisDB, err := strconv.Atoi(cfg.Redis.DB)
 	if err != nil {
-		fmt.Println("invalid redis db value:", err)
+		log.Error("invalid redis db value", "db", cfg.Redis.DB, "err", err)
 		return
 	}
 
@@ -74,9 +85,10 @@ func main() {
 	defer stop()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		fmt.Println("failed to connect to redis:", err)
+		log.Error("failed to connect to redis", "addr", cfg.Redis.Addr, "err", err)
 		return
 	}
+
 	defer func() {
 		_ = rdb.Close()
 	}()
@@ -86,8 +98,8 @@ func main() {
 	svc := alerterservice.NewAlerterService(p, c, deviceStore, alerterservice.NewRuleEngine(), log)
 
 	if err := svc.Start(ctx); err != nil && !errors.Is(err, context.Canceled) {
-		fmt.Println("alerter exited with error:", err)
+		log.Error("alerter exited with error", "err", err)
 	}
-	fmt.Println("alerter shutdown complete")
+	log.Info("alerter shutdown complete")
 
 }

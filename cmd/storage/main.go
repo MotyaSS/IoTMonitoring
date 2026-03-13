@@ -15,7 +15,7 @@ import (
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
 	"github.com/MotyaSS/IoTMonitoring/internal/kafka"
 	"github.com/MotyaSS/IoTMonitoring/internal/logger"
-	storagesvc "github.com/MotyaSS/IoTMonitoring/internal/storage/service"
+	"github.com/MotyaSS/IoTMonitoring/internal/storage/service"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -33,18 +33,21 @@ func main() {
 
 	cfg, err := config.Load(configPath)
 	if err != nil {
-		fmt.Println("failed to load config:", err)
+		log.Error("failed to load config",
+			"path", configPath,
+			"err", err,
+		)
 		return
 	}
 
 	if cfg.Kafka == nil || cfg.Postgres == nil || cfg.Mongo == nil || cfg.S3 == nil || cfg.GRPC == nil {
-		fmt.Println("storage config is incomplete: kafka, postgres, mongo, s3, grpc are required")
+		log.Error("storage config is incomplete: kafka, postgres, mongo, s3, grpc are required")
 		return
 	}
 
 	consumer, err := kafka.NewConsumer(cfg.Kafka, log)
 	if err != nil {
-		fmt.Println("failed to initialize kafka consumer:", err)
+		log.Error("failed to initialize kafka consumer", "err", err)
 		return
 	}
 	defer func() {
@@ -56,7 +59,9 @@ func main() {
 
 	postgresDB, err := initPostgres(ctx, cfg.Postgres)
 	if err != nil {
-		fmt.Println("failed to initialize postgres:", err)
+		log.Error("failed to initialize postgres",
+			"err", err,
+		)
 		return
 	}
 	defer func() {
@@ -65,27 +70,33 @@ func main() {
 
 	mongoClient, err := mongo.Connect(options.Client().ApplyURI(cfg.Mongo.URI))
 	if err != nil {
-		fmt.Println("failed to initialize mongo:", err)
+		log.Error("failed to initialize mongo",
+			"err", err,
+		)
 		return
 	}
 	defer func() {
 		_ = mongoClient.Disconnect(context.Background())
 	}()
 
-	if err := mongoClient.Ping(ctx, nil); err != nil {
-		fmt.Println("failed to ping mongo:", err)
+	if err = mongoClient.Ping(ctx, nil); err != nil {
+		log.Error("failed to ping mongo",
+			"err", err,
+		)
 		return
 	}
 
 	minioClient, err := initMinio(cfg.S3)
 	if err != nil {
-		fmt.Println("failed to initialize minio:", err)
+		log.Error("failed to initialize minio",
+			"err", err,
+		)
 		return
 	}
 
 	metricsColl := mongoClient.Database(cfg.Mongo.DB).Collection("metrics")
 
-	svc := storagesvc.NewService(
+	svc := service.NewStorageService(
 		consumer,
 		postgresDB,
 		metricsColl,
@@ -99,10 +110,10 @@ func main() {
 	)
 
 	if err := svc.Start(ctx); err != nil && !errors.Is(err, context.Canceled) {
-		fmt.Println("storage exited with error:", err)
+		log.Error("storage exited with error", "err", err)
 	}
 
-	fmt.Println("storage shutdown complete")
+	log.Info("storage shutdown complete")
 
 }
 

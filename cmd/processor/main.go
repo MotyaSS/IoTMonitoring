@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -18,20 +17,25 @@ import (
 func main() {
 	log := logger.NewLoggerWithPrefix(slog.NewTextHandler(os.Stdout, nil), "processor")
 
-	cfg, err := config.Load("configs/processor.yaml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/processor.yaml"
+	}
+
+	cfg, err := config.Load(configPath)
 	if err != nil {
-		fmt.Println("failed to load config: ", err)
+		log.Error("failed to load config", "path", configPath, "err", err)
 		return
 	}
 
 	if cfg.Kafka == nil {
-		fmt.Println("kafka missing in config file")
+		log.Error("kafka missing in config file")
 		return
 	}
 
 	p, err := kafka.NewProducer(cfg.Kafka, log)
 	if err != nil {
-		fmt.Println("failed to initialize kafka producer: ", err)
+		log.Error("failed to initialize kafka producer", "err", err)
 		return
 	}
 
@@ -41,7 +45,7 @@ func main() {
 
 	c, err := kafka.NewConsumer(cfg.Kafka, log)
 	if err != nil {
-		fmt.Println("failed to initialize kafka consumer: ", err)
+		log.Error("failed to initialize kafka consumer", "err", err)
 		return
 	}
 
@@ -55,7 +59,7 @@ func main() {
 	defer stop()
 
 	if err := s.Start(ctx); err != nil && !errors.Is(err, context.Canceled) {
-		fmt.Println("processor exited with error:", err)
+		log.Error("processor exited with error", "err", err)
 	}
-	fmt.Println("processor shutdown complete")
+	log.Info("processor shutdown complete")
 }

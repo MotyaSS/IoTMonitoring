@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/MotyaSS/IoTMonitoring/internal/config"
@@ -18,7 +19,12 @@ func main() {
 
 	defer cancel()
 
-	cfg, err := config.Load("configs/scrapper.yaml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/scrapper.yaml"
+	}
+
+	cfg, err := config.Load(configPath)
 	if err != nil {
 		fmt.Println("Error loading config:", err)
 		return
@@ -56,5 +62,9 @@ func main() {
 			Pressure:    nil,
 			LogMessage:  new("sent telemetry"),
 		})
+		if err != nil {
+			fmt.Println("failed to send telemetry:", err)
+			return
+		}
 	}
 }

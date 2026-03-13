@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -17,23 +17,29 @@ import (
 
 func main() {
 	log := logger.NewLoggerWithPrefix(slog.NewTextHandler(os.Stdout, nil), "scrapper")
-	cfg, err := config.Load("configs/scrapper.yaml")
+
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/scrapper.yaml"
+	}
+
+	cfg, err := config.Load(configPath)
 	if err != nil {
-		fmt.Println("failed to load config: ", err)
+		log.Error("failed to load config", "path", configPath, "err", err)
 		return
 	}
 	if cfg.GRPC == nil {
-		fmt.Println("grpc missing in config file")
+		log.Error("grpc missing in config file")
 		return
 	}
 	if cfg.Kafka == nil {
-		fmt.Println("kafka missing in config file")
+		log.Error("kafka missing in config file")
 		return
 	}
 
 	p, err := kafka.NewProducer(cfg.Kafka, log)
 	if err != nil {
-		fmt.Println("failed to create kafka producer: ", err)
+		log.Error("failed to create kafka producer", "err", err)
 		return
 	}
 	defer func() {
@@ -47,8 +53,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := s.Run(ctx); err != nil {
-		fmt.Println("server exited with error:", err)
+	if err := s.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		log.Error("scrapper exited with error", "err", err)
 	}
-	fmt.Println("server shutdown complete")
+	log.Info("scrapper shutdown complete")
 }
