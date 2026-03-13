@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option go_package = "github.com/MotyaSS/IoTMonitoring/internal/storage/gen;storagepb";
+
+package storage.v1;
+
+service Storage {
+  rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse);
+}
+
+message GetDeviceRequest {
+  string device_id = 1;
+}
+
+message GetDeviceResponse {
+  Device device = 1;
+}
+
+message Device {
+  string device_id = 1;
+  double wind_speed_high_bound = 2;
+  double wind_speed_low_bound = 3;
+  double temperature_high_bound = 4;
+  double temperature_low_bound = 5;
+  double pressure_high_bound = 6;
+  double pressure_low_bound = 7;
+}
