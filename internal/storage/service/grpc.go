@@ -15,7 +15,7 @@ import (
 
 func (s *Service) GetDevice(ctx context.Context, req *storagepb.GetDeviceRequest) (*storagepb.GetDeviceResponse, error) {
 	if s.query == nil {
-		return nil, status.Error(codes.Internal, "query layer is not configured")
+		return nil, fmt.Errorf(`query is nil`)
 	}
 	return s.query.GetDevice(ctx, req)
 }
@@ -76,6 +76,7 @@ func (s *Service) runGRPC(ctx context.Context) error {
 	storagepb.RegisterStorageServer(g, s)
 
 	errCh := make(chan error, 1)
+	defer close(errCh)
 	go func() {
 		errCh <- g.Serve(lis)
 	}()

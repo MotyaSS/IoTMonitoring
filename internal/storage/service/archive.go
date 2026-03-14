@@ -16,7 +16,8 @@ import (
 
 func (s *Service) runArchiver(ctx context.Context) error {
 	if s.archive == nil {
-		return nil
+		s.log.Error("runArchiver: archive is nil")
+		return fmt.Errorf("archive is nil")
 	}
 	return s.archive.Run(ctx)
 }

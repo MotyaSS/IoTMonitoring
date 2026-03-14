@@ -11,6 +11,7 @@ import (
 	storagepb "github.com/MotyaSS/IoTMonitoring/internal/storage/gen"
 	"github.com/minio/minio-go/v7"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
@@ -102,31 +103,18 @@ func (s *Service) Start(ctx context.Context) error {
 	if err := s.ensureBucket(ctx); err != nil {
 		return err
 	}
+	eg, childCtx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		return s.runGRPC(childCtx)
+	})
 
-	errCh := make(chan error, 3)
+	eg.Go(func() error {
+		return s.runArchiver(childCtx)
+	})
 
-	go func() {
-		if err := s.runGRPC(ctx); err != nil {
-			errCh <- err
-		}
-	}()
+	eg.Go(func() error {
+		return s.runIngest(childCtx)
+	})
 
-	go func() {
-		if err := s.runArchiver(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	go func() {
-		if err := s.runIngest(ctx); err != nil {
-			errCh <- err
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-errCh:
-		return err
-	}
+	return eg.Wait()
 }

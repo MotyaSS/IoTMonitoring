@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 func (s *Service) runIngest(ctx context.Context) error {
 	if s.ingest == nil {
-		return nil
+		return fmt.Errorf("ingest is nil")
 	}
 	return s.ingest.Run(ctx)
 }
