@@ -71,13 +71,3 @@ CONFIG_PATH=configs/alerter.yaml go run cmd/alerter/main.go
 
 - SQL-инициализация таблицы `devices` лежит в `deployment/postgres/init/001_devices.sql`
 - Скрипт автоматически применяется контейнером Postgres при первом старте пустого volume
-
-## Полезные команды
-
-```bash
-go test ./...
-make proto
-make docker-up
-make docker-down
-```
-
