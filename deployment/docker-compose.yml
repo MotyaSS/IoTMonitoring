@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   zookeeper:
     image: bitnami/zookeeper:3.8
@@ -22,6 +20,11 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
     ports:
       - "9092:9092"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     networks:
       - iot_net
 
@@ -61,6 +64,12 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d iot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - iot_net
 
@@ -71,6 +80,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - iot_net
 
@@ -81,7 +95,8 @@ services:
       args:
         - SERVICE=scrapper
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - CONFIG_PATH=/app/config.yaml
     volumes:
@@ -98,7 +113,8 @@ services:
       args:
         - SERVICE=processor
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       - CONFIG_PATH=/app/config.yaml
     volumes:
@@ -113,7 +129,12 @@ services:
       args:
         - SERVICE=alerter
     depends_on:
-      - redis
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      storage:
+        condition: service_started
     environment:
       - CONFIG_PATH=/app/config.yaml
     volumes:
@@ -128,9 +149,14 @@ services:
       args:
         - SERVICE=storage
     depends_on:
-      - mongo
-      - postgres
-      - minio
+      kafka:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       - CONFIG_PATH=/app/config.yaml
     volumes:
